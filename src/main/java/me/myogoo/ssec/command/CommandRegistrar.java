@@ -2,49 +2,88 @@ package me.myogoo.ssec.command;
 
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.arguments.ArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.tree.CommandNode;
 import com.mojang.brigadier.tree.LiteralCommandNode;
-import me.myogoo.ssec.api.command.SSCExecute;
-import me.myogoo.ssec.api.command.SSCPermission;
-import me.myogoo.ssec.api.command.SSCommand;
-import me.myogoo.ssec.api.command.SSCArgument;
-import me.myogoo.ssec.api.command.SSCAlias;
-import me.myogoo.ssec.api.command.permission.SSCPermissionChecker;
-import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.commands.Commands;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Parameter;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.StringJoiner;
-import com.mojang.brigadier.arguments.ArgumentType;
-import com.mojang.brigadier.builder.RequiredArgumentBuilder;
-import net.minecraft.commands.arguments.EntityArgument;
-
+import java.util.UUID;
+import me.myogoo.ssec.api.command.SSCAlias;
+import me.myogoo.ssec.api.command.SSCArgument;
+import me.myogoo.ssec.api.command.SSCExecute;
+import me.myogoo.ssec.api.command.SSCommand;
+import me.myogoo.ssec.api.command.SSCPermission;
 import me.myogoo.ssec.api.command.argument.SSCArgumentAdapter;
 import me.myogoo.ssec.api.command.permission.PermissionLevel;
-import me.myogoo.ssec.command.argument.SSCIntArgument;
-import me.myogoo.ssec.command.argument.SSCDoubleArgument;
-import me.myogoo.ssec.command.argument.SSCFloatArgument;
 import me.myogoo.ssec.command.argument.SSCBooleanArgument;
+import me.myogoo.ssec.command.argument.SSCBlockInputArgument;
+import me.myogoo.ssec.command.argument.SSCColorArgument;
+import me.myogoo.ssec.command.argument.SSCComponentArgument;
+import me.myogoo.ssec.command.argument.SSCCompoundTagArgument;
+import me.myogoo.ssec.command.argument.SSCDimensionArgument;
+import me.myogoo.ssec.command.argument.SSCDoubleArgument;
+import me.myogoo.ssec.command.argument.SSCDisplaySlotArgument;
+import me.myogoo.ssec.command.argument.SSCFloatArgument;
+import me.myogoo.ssec.command.argument.SSCGameModeArgument;
+import me.myogoo.ssec.command.argument.SSCHeightmapTypeArgument;
+import me.myogoo.ssec.command.argument.SSCIntArgument;
+import me.myogoo.ssec.command.argument.SSCMirrorArgument;
+import me.myogoo.ssec.command.argument.SSCNbtPathArgument;
+import me.myogoo.ssec.command.argument.SSCRotationTemplateArgument;
+import me.myogoo.ssec.command.argument.SSCScoreHolderArgument;
+import me.myogoo.ssec.command.argument.SSCSlotRangeArgument;
 import me.myogoo.ssec.command.argument.SSCStringArgument;
-import me.myogoo.ssec.command.argument.math.SSCVec3Argument;
+import me.myogoo.ssec.command.argument.SSCStyleArgument;
+import me.myogoo.ssec.command.argument.SSCTeamArgument;
+import me.myogoo.ssec.command.argument.SSCUUIDArgument;
+import me.myogoo.ssec.command.argument.block.SSCBlockPosArgument;
+import me.myogoo.ssec.command.argument.block.SSCColumnPosArgument;
 import me.myogoo.ssec.command.argument.entity.SSCEntitiesArgument;
 import me.myogoo.ssec.command.argument.entity.SSCEntityArgument;
 import me.myogoo.ssec.command.argument.entity.SSCPlayerArgument;
 import me.myogoo.ssec.command.argument.entity.SSCPlayersArgument;
+import me.myogoo.ssec.command.argument.math.SSCAngleArgument;
+import me.myogoo.ssec.command.argument.math.SSCEntityAnchorArgument;
+import me.myogoo.ssec.command.argument.math.SSCVec2Argument;
+import me.myogoo.ssec.command.argument.math.SSCVec3Argument;
+import me.myogoo.ssec.api.command.permission.SSCPermissionChecker;
+import net.minecraft.ChatFormatting;
+import net.minecraft.commands.CommandBuildContext;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.Commands;
+import net.minecraft.commands.arguments.AngleArgument;
+import net.minecraft.commands.arguments.EntityAnchorArgument;
+import net.minecraft.commands.arguments.EntityArgument;
+import net.minecraft.commands.arguments.NbtPathArgument;
+import net.minecraft.commands.arguments.blocks.BlockInput;
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.server.permissions.Permission;
-import net.minecraft.world.phys.Vec3;
-import net.minecraft.world.entity.Entity;
+import net.minecraft.network.chat.Style;
+import net.minecraft.server.level.ColumnPos;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-
+import net.minecraft.server.permissions.Permission;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.inventory.SlotRange;
+import net.minecraft.world.level.GameType;
+import net.minecraft.world.level.block.Mirror;
+import net.minecraft.world.level.block.Rotation;
+import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraft.world.phys.Vec2;
+import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.scores.DisplaySlot;
+import net.minecraft.world.scores.PlayerTeam;
+import net.minecraft.world.scores.ScoreHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -64,6 +103,27 @@ public class CommandRegistrar {
         registerAdapter(boolean.class, new SSCBooleanArgument());
         registerAdapter(Boolean.class, new SSCBooleanArgument());
         registerAdapter(String.class, new SSCStringArgument());
+        registerAdapter(ChatFormatting.class, new SSCColorArgument());
+        registerAdapter(CompoundTag.class, new SSCCompoundTagArgument());
+        registerAdapter(Component.class, new SSCComponentArgument());
+        registerAdapter(ServerLevel.class, new SSCDimensionArgument());
+        registerAdapter(DisplaySlot.class, new SSCDisplaySlotArgument());
+        registerAdapter(GameType.class, new SSCGameModeArgument());
+        registerAdapter(Heightmap.Types.class, new SSCHeightmapTypeArgument());
+        registerAdapter(Mirror.class, new SSCMirrorArgument());
+        registerAdapter(NbtPathArgument.NbtPath.class, new SSCNbtPathArgument());
+        registerAdapter(Rotation.class, new SSCRotationTemplateArgument());
+        registerAdapter(ScoreHolder.class, new SSCScoreHolderArgument());
+        registerAdapter(SlotRange.class, new SSCSlotRangeArgument());
+        registerAdapter(Style.class, new SSCStyleArgument());
+        registerAdapter(PlayerTeam.class, new SSCTeamArgument());
+        registerAdapter(UUID.class, new SSCUUIDArgument());
+        registerAdapter(AngleArgument.SingleAngle.class, new SSCAngleArgument());
+        registerAdapter(EntityAnchorArgument.Anchor.class, new SSCEntityAnchorArgument());
+        registerAdapter(BlockInput.class, new SSCBlockInputArgument());
+        registerAdapter(BlockPos.class, new SSCBlockPosArgument());
+        registerAdapter(ColumnPos.class, new SSCColumnPosArgument());
+        registerAdapter(Vec2.class, new SSCVec2Argument());
         registerAdapter(Vec3.class, new SSCVec3Argument());
         registerAdapter(Entity.class, new SSCEntityArgument());
         registerAdapter(Entity[].class, new SSCEntitiesArgument());
@@ -85,7 +145,15 @@ public class CommandRegistrar {
      * Registers a command class to the dispatcher (legacy: inner-class only).
      */
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher, Class<?> clazz) {
-        register(dispatcher, clazz, List.of());
+        register(dispatcher, null, clazz, List.of());
+    }
+
+    /**
+     * Registers a command class to the dispatcher (legacy: inner-class only).
+     */
+    public static void register(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext buildContext,
+            Class<?> clazz) {
+        register(dispatcher, buildContext, clazz, List.of());
     }
 
     /**
@@ -97,7 +165,8 @@ public class CommandRegistrar {
      * @param allCommandClasses All classes annotated with @SSCommand (for
      *                          cross-file child lookup)
      */
-    public static void register(CommandDispatcher<CommandSourceStack> dispatcher, Class<?> clazz,
+    public static void register(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext buildContext,
+            Class<?> clazz,
             List<Class<?>> allCommandClasses) {
         LOGGER.debug("Attempting to register class: {}", clazz.getName());
         if (!clazz.isAnnotationPresent(SSCommand.class)) {
@@ -105,7 +174,7 @@ public class CommandRegistrar {
             return;
         }
 
-        LiteralArgumentBuilder<CommandSourceStack> builder = buildCommandNode(clazz, allCommandClasses);
+        LiteralArgumentBuilder<CommandSourceStack> builder = buildCommandNode(buildContext, clazz, allCommandClasses);
         if (builder != null) {
             LiteralCommandNode<CommandSourceStack> registeredNode = dispatcher.register(builder);
             LOGGER.info("Successfully registered root node: {}", registeredNode.getName());
@@ -403,12 +472,13 @@ public class CommandRegistrar {
                 resolved, targetNode.getName(), parts[0]);
     }
 
-    private static LiteralArgumentBuilder<CommandSourceStack> buildCommandNode(Class<?> clazz,
+    private static LiteralArgumentBuilder<CommandSourceStack> buildCommandNode(CommandBuildContext buildContext,
+            Class<?> clazz,
             List<Class<?>> allCommandClasses) {
         SSCommand cmdAnnotation = clazz.getAnnotation(SSCommand.class);
         if (cmdAnnotation == null)
             return null;
-        return buildCommandNodeWithName(cmdAnnotation.value(), clazz, allCommandClasses);
+        return buildCommandNodeWithName(buildContext, cmdAnnotation.value(), clazz, allCommandClasses);
     }
 
     /**
@@ -417,7 +487,7 @@ public class CommandRegistrar {
      * instead of the original command name.
      */
     private static LiteralArgumentBuilder<CommandSourceStack> buildCommandNodeWithName(
-            String overrideName, Class<?> clazz, List<Class<?>> allCommandClasses) {
+            CommandBuildContext buildContext, String overrideName, Class<?> clazz, List<Class<?>> allCommandClasses) {
 
         LiteralArgumentBuilder<CommandSourceStack> node = Commands.literal(overrideName);
 
@@ -485,7 +555,7 @@ public class CommandRegistrar {
                         continue;
                     }
 
-                    ArgumentType<?> argType = getArgumentTypeForClass(param.getType());
+                    ArgumentType<?> argType = getArgumentTypeForClass(param.getType(), buildContext);
 
                     if (argType == null) {
                         LOGGER.error("Unsupported argument type {} in method {}", param.getType().getName(),
@@ -568,7 +638,7 @@ public class CommandRegistrar {
             if (innerClass.isAnnotationPresent(SSCommand.class)) {
                 SSCommand innerCmdAnnotation = innerClass.getAnnotation(SSCommand.class);
                 if (innerCmdAnnotation.parent() == clazz) {
-                    LiteralArgumentBuilder<CommandSourceStack> subNode = buildCommandNode(innerClass,
+                    LiteralArgumentBuilder<CommandSourceStack> subNode = buildCommandNode(buildContext, innerClass,
                             allCommandClasses);
                     if (subNode != null) {
                         node = node.then(subNode);
@@ -586,7 +656,7 @@ public class CommandRegistrar {
                 SSCommand candidateAnnotation = candidate.getAnnotation(SSCommand.class);
                 // External class with parent == this class and NOT an inner class of this class
                 if (candidateAnnotation.parent() == clazz && candidate.getDeclaringClass() != clazz) {
-                    LiteralArgumentBuilder<CommandSourceStack> subNode = buildCommandNode(candidate,
+                    LiteralArgumentBuilder<CommandSourceStack> subNode = buildCommandNode(buildContext, candidate,
                             allCommandClasses);
                     if (subNode != null) {
                         node = node.then(subNode);
@@ -600,9 +670,9 @@ public class CommandRegistrar {
         return node;
     }
 
-    private static ArgumentType<?> getArgumentTypeForClass(Class<?> clazz) {
+    private static ArgumentType<?> getArgumentTypeForClass(Class<?> clazz, CommandBuildContext buildContext) {
         if (ADAPTER_REGISTRY.containsKey(clazz)) {
-            return ADAPTER_REGISTRY.get(clazz).argumentType();
+            return ADAPTER_REGISTRY.get(clazz).argumentType(buildContext);
         }
         if (clazz.getName().contains("ServerPlayer"))
             return EntityArgument.player();

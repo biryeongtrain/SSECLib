@@ -181,11 +181,32 @@ public class MyEvents {
 | `float` / `Float` | `FloatArgumentType` |
 | `boolean` / `Boolean` | `BoolArgumentType` |
 | `String` | `StringArgumentType` |
+| `UUID` | `UuidArgument` |
+| `ChatFormatting` | `ColorArgument` |
+| `Component` | `ComponentArgument` |
+| `Style` | `StyleArgument` |
+| `CompoundTag` | `CompoundTagArgument` |
+| `NbtPathArgument.NbtPath` | `NbtPathArgument` |
+| `BlockInput` | `BlockStateArgument` |
+| `BlockPos` | `BlockPosArgument` |
+| `ColumnPos` | `ColumnPosArgument` |
+| `Vec2` | `Vec2Argument` |
 | `Vec3` | `Vec3Argument` |
+| `AngleArgument.SingleAngle` | `AngleArgument` |
+| `EntityAnchorArgument.Anchor` | `EntityAnchorArgument` |
 | `Entity` | `EntityArgument.entity()` |
 | `Entity[]` | `EntityArgument.entities()` |
 | `ServerPlayer` | `EntityArgument.player()` |
 | `ServerPlayer[]` | `EntityArgument.players()` |
+| `ServerLevel` | `DimensionArgument` |
+| `GameType` | `GameModeArgument` |
+| `Heightmap.Types` | `HeightmapTypeArgument` |
+| `DisplaySlot` | `ScoreboardSlotArgument` |
+| `ScoreHolder` | `ScoreHolderArgument` |
+| `PlayerTeam` | `TeamArgument` |
+| `SlotRange` | `SlotsArgument` |
+| `Mirror` | `TemplateMirrorArgument` |
+| `Rotation` | `TemplateRotationArgument` |
 
 커스텀 타입은 `SSCArgumentAdapter`를 구현하여 `CommandRegistrar.registerAdapter()`로 등록할 수 있습니다.
 

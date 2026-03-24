@@ -161,7 +161,7 @@ public class SSECScanner {
             // Determine as a root command only if parent() is void.class (default)
             if (annotation.parent() == void.class) {
                 CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
-                    CommandRegistrar.register(dispatcher, clazz, allCommandClasses);
+                    CommandRegistrar.register(dispatcher, registryAccess, clazz, allCommandClasses);
                 });
                 count++;
                 LOGGER.info("[SSEC] Registered root command class: {}", clazz.getSimpleName());
